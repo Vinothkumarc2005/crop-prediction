@@ -1,0 +1,58 @@
+# ── Node / npm ──────────────────────────────────────────────────────────────
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.cache/
+*.local
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+**/.venv/
+venv/
+**/venv/
+env/
+**/env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Environment / secrets ────────────────────────────────────────────────────
+.env
+**/.env
+.env.local
+.env.*.local
+*.env
+
+# ── Vite / Build artifacts ───────────────────────────────────────────────────
+dist/
+dist-ssr/
+
+# ── IDE / editors ────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
