@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard'
 import YieldDetail from './pages/YieldDetail'
 import MarketPrices from './pages/MarketPrices'
 import History from './pages/History'
+import NdviIndex from './pages/NdviIndex'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -82,6 +83,7 @@ export default function App() {
         <Route path="/yield/:fieldId/:crop" element={<ProtectedRoute><YieldDetail /></ProtectedRoute>} />
         <Route path="/market" element={<MarketPrices />} />
         <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+        <Route path="/ndvi" element={<ProtectedRoute><NdviIndex /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       </ErrorBoundary>

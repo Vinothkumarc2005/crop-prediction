@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { Sprout, LayoutDashboard, MapPin, TrendingUp, History, LogOut, LogIn, Menu, X } from 'lucide-react'
+import { Sprout, LayoutDashboard, MapPin, TrendingUp, History, LogOut, LogIn, Menu, X, Leaf } from 'lucide-react'
 import { useState } from 'react'
 
 export default function Navbar() {
@@ -19,6 +19,7 @@ export default function Navbar() {
   const navItems = token ? [
     { to: '/dashboard', icon: <LayoutDashboard size={16} />, label: 'Dashboard' },
     { to: '/fields/new', icon: <MapPin size={16} />, label: 'Add Field' },
+    { to: '/ndvi', icon: <Leaf size={16} />, label: 'NDVI Index' },
     { to: '/market', icon: <TrendingUp size={16} />, label: 'Market' },
     { to: '/history', icon: <History size={16} />, label: 'History' },
   ] : [
