@@ -66,13 +66,19 @@ export default function Dashboard() {
     try {
       const data = await predictApi.recommend({ fieldId: selectedFieldId, season })
       setRecommendations(data)
-      toast.success(`Got ${data.crops?.length || 0} crop recommendations!`)
     } catch (err) {
       toast.error('Could not load recommendations')
     } finally {
       setLoadingReco(false)
     }
   }
+
+  // Auto-fetch recommendations on initial load and when field/season changes
+  useEffect(() => {
+    if (selectedFieldId) {
+      handleRecommend()
+    }
+  }, [selectedFieldId, season])
 
   const selectedField = fields.find((f: any) => f.id === selectedFieldId)
 

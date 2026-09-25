@@ -34,8 +34,19 @@ export type DrawingMode = 'points' | 'freehand' | 'standard'
 
 interface FieldMapDrawerProps {
   initialCenter?: [number, number]
+  initialZoom?: number
   onPolygonChange: (coordinates: [number, number][]) => void
   onAreaChange?: (hectares: number) => void
+}
+
+function MapRecenter({ center, zoom }: { center?: [number, number]; zoom?: number }) {
+  const map = useMap()
+  useEffect(() => {
+    if (center && center[0] && center[1]) {
+      map.setView(center, zoom || 14, { animate: true })
+    }
+  }, [center, zoom, map])
+  return null
 }
 
 // Custom DivIcon for numbered, draggable vertex markers
@@ -173,10 +184,12 @@ function FreehandDrawHandler({
 
 export default function FieldMapDrawer({
   initialCenter = [20.0, 74.0],
+  initialZoom = 13,
   onPolygonChange,
   onAreaChange,
 }: FieldMapDrawerProps) {
   const [mode, setMode] = useState<DrawingMode>('points')
+  const [tileLayer, setTileLayer] = useState<'streets' | 'satellite' | 'terrain'>('satellite')
 
   // Point-by-point state
   const [markedPoints, setMarkedPoints] = useState<[number, number][]>([])
@@ -376,6 +389,35 @@ export default function FieldMapDrawer({
           >
             <Square size={15} />
             <span>Standard Tool</span>
+          </button>
+        </div>
+
+        {/* ── Tile Layer Switcher (Satellite / Roads / Terrain) ── */}
+        <div className="flex items-center gap-1.5" style={{ background: 'var(--bg-base)', padding: '3px 6px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: '4px' }}>Layer:</span>
+          <button
+            type="button"
+            className={`btn btn-xs ${tileLayer === 'satellite' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setTileLayer('satellite')}
+            style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+          >
+            🛰️ Satellite
+          </button>
+          <button
+            type="button"
+            className={`btn btn-xs ${tileLayer === 'streets' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setTileLayer('streets')}
+            style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+          >
+            🛣️ Roads/OSM
+          </button>
+          <button
+            type="button"
+            className={`btn btn-xs ${tileLayer === 'terrain' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setTileLayer('terrain')}
+            style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+          >
+            ⛰️ Topo
           </button>
         </div>
 
@@ -621,13 +663,31 @@ export default function FieldMapDrawer({
       >
         <MapContainer
           center={initialCenter}
-          zoom={13}
+          zoom={initialZoom}
           style={{ height: '100%', width: '100%' }}
         >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
+          <MapRecenter center={initialCenter} zoom={initialZoom} />
+          {tileLayer === 'satellite' && (
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution="Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics"
+              maxZoom={19}
+            />
+          )}
+          {tileLayer === 'streets' && (
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              maxZoom={19}
+            />
+          )}
+          {tileLayer === 'terrain' && (
+            <TileLayer
+              url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://opentopomap.org">OpenTopoMap</a> (&copy; OSM contributors)'
+              maxZoom={17}
+            />
+          )}
 
           {/* Mode 1: Point-by-Point Interaction */}
           <PointClickHandler mode={mode} onAddPoint={handleAddPoint} />

@@ -59,10 +59,10 @@ cd /d "%~dp0agriiq\fastapi-backend"
 
 if exist ".venv\Scripts\python.exe" (
     echo [OK] Found Python virtual environment (.venv).
-    start "AgriIQ Backend (port 8000)" cmd /k "cd /d ""%~dp0agriiq\fastapi-backend"" && call .venv\Scripts\activate.bat && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    start "AgriIQ Backend (port 8000)" /D "%~dp0agriiq\fastapi-backend" cmd /k "call .venv\Scripts\activate.bat && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 ) else (
     echo [WARN] No .venv found. Using system Python.
-    start "AgriIQ Backend (port 8000)" cmd /k "cd /d ""%~dp0agriiq\fastapi-backend"" && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    start "AgriIQ Backend (port 8000)" /D "%~dp0agriiq\fastapi-backend" cmd /k "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 )
 echo [OK] FastAPI backend window launched.
 
@@ -81,7 +81,7 @@ if not exist "node_modules" (
     call npm install
 )
 
-start "AgriIQ Frontend (port 3000)" cmd /k "cd /d ""%~dp0agriiq\frontend"" && npm run dev"
+start "AgriIQ Frontend (port 3000)" /D "%~dp0agriiq\frontend" cmd /k "npm run dev"
 echo [OK] React frontend window launched.
 
 REM ── Step 5: Open browser ─────────────────────────────────────
@@ -98,13 +98,15 @@ echo.
 echo  ╔══════════════════════════════════════════════════════╗
 echo  ║                  AgriIQ is Live!                    ║
 echo  ╠══════════════════════════════════════════════════════╣
-echo  ║  Frontend   →  http://localhost:3000                ║
-echo  ║  NDVI Index →  http://localhost:3000/ndvi           ║
-echo  ║  Backend    →  http://localhost:8000                ║
-echo  ║  API Docs   →  http://localhost:8000/docs           ║
-echo  ║  PostgreSQL →  localhost:5432                       ║
-echo  ╠══════════════════════════════════════════════════════╣
-echo  ║  Close the terminal windows when you want to stop.  ║
+echo  ║  Frontend          →  http://localhost:3000          ║
+echo  ║  Farm Map Setup    →  http://localhost:3000/fields/new║
+echo  ║  NDVI Monitor      →  http://localhost:3000/ndvi     ║
+echo  ║  Crop Intelligence →  http://localhost:3000/crop     ║
+echo  ║  Weather Intel     →  http://localhost:3000/weather-intel║
+echo  ║  Fertilizer Advisor→  http://localhost:3000/fertilizer║
+echo  ║  Profitability & ROI→ http://localhost:3000/profitability║
+echo  ║  Market Prices     →  http://localhost:3000/market   ║
+echo  ║  Backend API Docs  →  http://localhost:8000/docs     ║
 echo  ╚══════════════════════════════════════════════════════╝
 echo.
 pause

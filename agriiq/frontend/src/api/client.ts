@@ -84,4 +84,31 @@ export const weatherApi = {
     api.get('/weather/forecast', { params: { district, state, months } }).then(r => r.data),
 }
 
+// ── Location ──────────────────────────────────────────────────────────────
+export const locationApi = {
+  states: () => api.get('/location/states').then(r => r.data as string[]),
+  cities: (state: string) => api.get('/location/cities', { params: { state } }).then(r => r.data as string[]),
+  geocode: (city: string, state: string) =>
+    api.get('/location/geocode', { params: { city, state } }).then(r => r.data as { lat: number; lng: number; displayName: string; source: string }),
+}
+
+// ── Fertilizer ────────────────────────────────────────────────────────────
+export const fertilizerApi = {
+  crops: () => api.get('/fertilizer/crops').then(r => r.data as string[]),
+  recommend: (data: {
+    crop: string; area_acres: number; soil_ph?: number | null;
+    soil_n?: number | null; soil_p?: number | null; soil_k?: number | null;
+    growth_stage?: string;
+  }) => api.post('/fertilizer/recommend', data).then(r => r.data),
+}
+
+// ── Profitability ─────────────────────────────────────────────────────────
+export const profitabilityApi = {
+  calculate: (data: {
+    crop: string; area_acres: number; state?: string; district?: string;
+    season?: string; custom_price?: number | null; custom_yield?: number | null;
+  }) => api.post('/profitability/calculate', data).then(r => r.data),
+}
+
 export default api
+
