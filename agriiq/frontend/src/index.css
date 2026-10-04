@@ -583,3 +583,10 @@ a:hover { color: var(--color-primary-light); }
 /* ── Suitability Bar ───────────────────────────────────────────────────────── */
 .suitability-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.07); overflow: hidden; }
 .suitability-fill { height: 100%; border-radius: 999px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+
+/* ── AgriBot Animations ────────────────────────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+

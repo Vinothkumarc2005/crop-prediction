@@ -110,5 +110,39 @@ export const profitabilityApi = {
   }) => api.post('/profitability/calculate', data).then(r => r.data),
 }
 
+// ── AgriBot ───────────────────────────────────────────────────────────────
+export const agribotApi = {
+  chat: (data: {
+    message: string
+    context?: {
+      fieldName?: string | null
+      cropName?: string | null
+      district?: string | null
+      state?: string | null
+      areaAcres?: number | null
+      growthStage?: string | null
+      soilPh?: number | null
+      soilNitrogen?: number | null
+      soilPhosphorus?: number | null
+      soilPotassium?: number | null
+      soilTexture?: string | null
+      ndviMean?: number | null
+      ndviTrend?: string | null
+      ndviHealth?: string | null
+      tempMaxC?: number | null
+      tempMinC?: number | null
+      rainfallMm?: number | null
+      humidityPct?: number | null
+    } | null
+    history?: { role: string; content: string }[] | null
+  }) => api.post('/agribot/chat', data).then(r => r.data as {
+    reply: string
+    category: string
+    suggestions: string[]
+    confidence: number
+    sources: string[]
+  }),
+}
+
 export default api
 

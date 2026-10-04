@@ -19,7 +19,7 @@ echo [1/3] Checking PostgreSQL database...
 netstat -ano | findstr /R ":5432.*LISTENING" >nul 2>&1
 if %errorlevel% equ 0 (
     echo [OK] PostgreSQL is already running on port 5432.
-    goto start_backend
+    goto check_backend
 )
 
 REM If not listening on 5432, try starting via Docker Compose
@@ -29,7 +29,7 @@ if %errorlevel% neq 0 (
     echo [WARN] PostgreSQL is not running on port 5432, and Docker is not available.
     echo        If your PostgreSQL service is installed, please start it in Windows Services.
     echo        Attempting to proceed anyway...
-    goto start_backend
+    goto check_backend
 )
 
 echo       Starting PostgreSQL container via Docker Compose...
@@ -37,7 +37,7 @@ cd /d "%~dp0agriiq"
 docker compose up -d postgres
 if %errorlevel% neq 0 (
     echo [WARN] Failed to start PostgreSQL via Docker. Attempting to proceed anyway...
-    goto start_backend
+    goto check_backend
 )
 echo [OK] PostgreSQL container started.
 
@@ -46,49 +46,86 @@ echo       Waiting for PostgreSQL to be ready...
 :wait_postgres
 docker exec agriiq-postgres pg_isready -U agriiq -d agriiq >nul 2>&1
 if %errorlevel% neq 0 (
-    timeout /t 2 /nobreak >nul
+    ping 127.0.0.1 -n 3 >nul
     goto wait_postgres
 )
 echo [OK] PostgreSQL is ready.
 
-:start_backend
+:check_backend
 REM ── Step 2: Start FastAPI Backend ────────────────────────────
 echo.
-echo [2/3] Starting FastAPI Backend (port 8000)...
-cd /d "%~dp0agriiq\fastapi-backend"
+echo [2/3] Checking FastAPI Backend (port 8000)...
+netstat -ano | findstr /R ":8000.*LISTENING" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo [OK] FastAPI Backend is already running on port 8000.
+    goto check_frontend
+)
 
+cd /d "%~dp0agriiq\fastapi-backend"
 if exist ".venv\Scripts\python.exe" (
-    echo [OK] Found Python virtual environment (.venv).
-    start "AgriIQ Backend (port 8000)" /D "%~dp0agriiq\fastapi-backend" cmd /k "call .venv\Scripts\activate.bat && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    echo [OK] Found Python virtual environment.
+    start "AgriIQ Backend" cmd /k "call .venv\Scripts\activate.bat && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 ) else (
-    echo [WARN] No .venv found. Using system Python.
-    start "AgriIQ Backend (port 8000)" /D "%~dp0agriiq\fastapi-backend" cmd /k "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    echo [WARN] No virtual environment found. Using system Python.
+    start "AgriIQ Backend" cmd /k "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 )
 echo [OK] FastAPI backend window launched.
 
-REM ── Step 3: Wait briefly for backend to initialize ───────────
-echo.
-echo       Waiting 4s for backend to initialize...
-timeout /t 4 /nobreak >nul
+REM Wait for backend port 8000 to be listening
+echo       Waiting for backend to be ready on port 8000...
+set /a bcount=0
+:wait_backend_loop
+netstat -ano | findstr /R ":8000.*LISTENING" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo [OK] Backend is ready on port 8000.
+    goto check_frontend
+)
+ping 127.0.0.1 -n 2 >nul
+set /a bcount+=1
+if %bcount% geq 20 (
+    echo [WARN] Backend startup took longer than expected. Continuing...
+    goto check_frontend
+)
+goto wait_backend_loop
 
-REM ── Step 4: Start React Frontend ─────────────────────────────
+:check_frontend
+REM ── Step 3: Start React Frontend ─────────────────────────────
 echo.
-echo [3/3] Starting React Frontend (port 3000)...
+echo [3/3] Checking React Frontend (port 3000)...
+netstat -ano | findstr /R ":3000.*LISTENING" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo [OK] React Frontend is already running on port 3000.
+    goto open_browser
+)
+
 cd /d "%~dp0agriiq\frontend"
-
 if not exist "node_modules" (
-    echo       node_modules not found — running npm install...
+    echo       node_modules not found - running npm install...
     call npm install
 )
 
-start "AgriIQ Frontend (port 3000)" /D "%~dp0agriiq\frontend" cmd /k "npm run dev"
+start "AgriIQ Frontend" cmd /k "npm run dev"
 echo [OK] React frontend window launched.
 
-REM ── Step 5: Open browser ─────────────────────────────────────
+REM ── Step 4: Wait for frontend to be active before opening browser
 echo.
-echo       Waiting 4s for frontend dev server...
-timeout /t 4 /nobreak >nul
+echo       Waiting for frontend server to become ready on port 3000...
+set /a fcount=0
+:wait_frontend_loop
+netstat -ano | findstr /R ":3000.*LISTENING" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo [OK] Frontend is online and responding on port 3000.
+    goto open_browser
+)
+ping 127.0.0.1 -n 2 >nul
+set /a fcount+=1
+if %fcount% geq 30 (
+    echo [WARN] Frontend server is taking longer to start. Opening browser now...
+    goto open_browser
+)
+goto wait_frontend_loop
 
+:open_browser
 echo.
 echo [OK] Opening browser at http://localhost:3000
 start http://localhost:3000
@@ -96,17 +133,20 @@ start http://localhost:3000
 REM ── Summary ───────────────────────────────────────────────────
 echo.
 echo  ╔══════════════════════════════════════════════════════╗
-echo  ║                  AgriIQ is Live!                    ║
+echo  ║                  AgriIQ is Live!                     ║
 echo  ╠══════════════════════════════════════════════════════╣
-echo  ║  Frontend          →  http://localhost:3000          ║
-echo  ║  Farm Map Setup    →  http://localhost:3000/fields/new║
-echo  ║  NDVI Monitor      →  http://localhost:3000/ndvi     ║
-echo  ║  Crop Intelligence →  http://localhost:3000/crop     ║
-echo  ║  Weather Intel     →  http://localhost:3000/weather-intel║
-echo  ║  Fertilizer Advisor→  http://localhost:3000/fertilizer║
-echo  ║  Profitability & ROI→ http://localhost:3000/profitability║
-echo  ║  Market Prices     →  http://localhost:3000/market   ║
-echo  ║  Backend API Docs  →  http://localhost:8000/docs     ║
+echo  ║  Frontend          -  http://localhost:3000          ║
+echo  ║  Farm Map Setup    -  http://localhost:3000/fields/new║
+echo  ║  NDVI Monitor      -  http://localhost:3000/ndvi     ║
+echo  ║  Crop Intelligence -  http://localhost:3000/crop     ║
+echo  ║  Weather Intel     -  http://localhost:3000/weather-intel║
+echo  ║  Fertilizer Advisor-  http://localhost:3000/fertilizer║
+echo  ║  Profitability ROI -  http://localhost:3000/profitability║
+echo  ║  Market Prices     -  http://localhost:3000/market   ║
+echo  ║  Backend API Docs  -  http://localhost:8000/docs     ║
 echo  ╚══════════════════════════════════════════════════════╝
+echo.
+echo  Keep the opened Backend and Frontend command windows open
+echo  while using the app.
 echo.
 pause

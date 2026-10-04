@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import Sidebar from './components/Sidebar'
+import AgriBot from './components/AgriBot'
 
 // ── Eager imports (always needed) ─────────────────────────────────────────────
 import Landing  from './pages/Landing'
@@ -91,6 +92,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </Suspense>
         </ErrorBoundary>
       </main>
+      {showSidebar && <AgriBot />}
     </div>
   )
 }
