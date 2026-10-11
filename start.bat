@@ -8,15 +8,15 @@ title AgriIQ - Starting Services
 
 color 0A
 echo.
-echo  ╔══════════════════════════════════════════════════╗
-echo  ║         AgriIQ — AI Crop Intelligence           ║
-echo  ║         Starting all project services...        ║
-echo  ╚══════════════════════════════════════════════════╝
+echo  ╔════════════════════════════════════════════════════════════╗
+echo  ║              AgriIQ — AI Crop Intelligence                 ║
+echo  ║              Starting all project services...              ║
+echo  ╚════════════════════════════════════════════════════════════╝
 echo.
 
 REM ── Step 1: Check PostgreSQL (Local or Docker) ───────────────
 echo [1/3] Checking PostgreSQL database...
-netstat -ano | findstr /R ":5432.*LISTENING" >nul 2>&1
+netstat -ano -p tcp | findstr ":5432 " >nul 2>&1
 if %errorlevel% equ 0 (
     echo [OK] PostgreSQL is already running on port 5432.
     goto check_backend
@@ -55,7 +55,7 @@ echo [OK] PostgreSQL is ready.
 REM ── Step 2: Start FastAPI Backend ────────────────────────────
 echo.
 echo [2/3] Checking FastAPI Backend (port 8000)...
-netstat -ano | findstr /R ":8000.*LISTENING" >nul 2>&1
+netstat -ano -p tcp | findstr ":8000 " >nul 2>&1
 if %errorlevel% equ 0 (
     echo [OK] FastAPI Backend is already running on port 8000.
     goto check_frontend
@@ -64,10 +64,10 @@ if %errorlevel% equ 0 (
 cd /d "%~dp0agriiq\fastapi-backend"
 if exist ".venv\Scripts\python.exe" (
     echo [OK] Found Python virtual environment.
-    start "AgriIQ Backend" cmd /k "call .venv\Scripts\activate.bat && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    start "AgriIQ Backend [DO NOT CLOSE]" cmd /k "echo ====================================================== && echo AgriIQ Backend is RUNNING. DO NOT CLOSE THIS WINDOW! && echo ====================================================== && call .venv\Scripts\activate.bat && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 ) else (
     echo [WARN] No virtual environment found. Using system Python.
-    start "AgriIQ Backend" cmd /k "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    start "AgriIQ Backend [DO NOT CLOSE]" cmd /k "echo ====================================================== && echo AgriIQ Backend is RUNNING. DO NOT CLOSE THIS WINDOW! && echo ====================================================== && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 )
 echo [OK] FastAPI backend window launched.
 
@@ -75,14 +75,14 @@ REM Wait for backend port 8000 to be listening
 echo       Waiting for backend to be ready on port 8000...
 set /a bcount=0
 :wait_backend_loop
-netstat -ano | findstr /R ":8000.*LISTENING" >nul 2>&1
+netstat -ano -p tcp | findstr ":8000 " >nul 2>&1
 if %errorlevel% equ 0 (
     echo [OK] Backend is ready on port 8000.
     goto check_frontend
 )
 ping 127.0.0.1 -n 2 >nul
 set /a bcount+=1
-if %bcount% geq 20 (
+if %bcount% geq 25 (
     echo [WARN] Backend startup took longer than expected. Continuing...
     goto check_frontend
 )
@@ -92,7 +92,7 @@ goto wait_backend_loop
 REM ── Step 3: Start React Frontend ─────────────────────────────
 echo.
 echo [3/3] Checking React Frontend (port 3000)...
-netstat -ano | findstr /R ":3000.*LISTENING" >nul 2>&1
+netstat -ano -p tcp | findstr ":3000 " >nul 2>&1
 if %errorlevel% equ 0 (
     echo [OK] React Frontend is already running on port 3000.
     goto open_browser
@@ -104,7 +104,7 @@ if not exist "node_modules" (
     call npm install
 )
 
-start "AgriIQ Frontend" cmd /k "npm run dev"
+start "AgriIQ Frontend [DO NOT CLOSE]" cmd /k "echo ====================================================== && echo AgriIQ Frontend is RUNNING. DO NOT CLOSE THIS WINDOW! && echo ====================================================== && npm run dev"
 echo [OK] React frontend window launched.
 
 REM ── Step 4: Wait for frontend to be active before opening browser
@@ -112,14 +112,14 @@ echo.
 echo       Waiting for frontend server to become ready on port 3000...
 set /a fcount=0
 :wait_frontend_loop
-netstat -ano | findstr /R ":3000.*LISTENING" >nul 2>&1
+netstat -ano -p tcp | findstr ":3000 " >nul 2>&1
 if %errorlevel% equ 0 (
     echo [OK] Frontend is online and responding on port 3000.
     goto open_browser
 )
 ping 127.0.0.1 -n 2 >nul
 set /a fcount+=1
-if %fcount% geq 30 (
+if %fcount% geq 35 (
     echo [WARN] Frontend server is taking longer to start. Opening browser now...
     goto open_browser
 )
@@ -132,21 +132,25 @@ start http://localhost:3000
 
 REM ── Summary ───────────────────────────────────────────────────
 echo.
-echo  ╔══════════════════════════════════════════════════════╗
-echo  ║                  AgriIQ is Live!                     ║
-echo  ╠══════════════════════════════════════════════════════╣
-echo  ║  Frontend          -  http://localhost:3000          ║
-echo  ║  Farm Map Setup    -  http://localhost:3000/fields/new║
-echo  ║  NDVI Monitor      -  http://localhost:3000/ndvi     ║
-echo  ║  Crop Intelligence -  http://localhost:3000/crop     ║
-echo  ║  Weather Intel     -  http://localhost:3000/weather-intel║
-echo  ║  Fertilizer Advisor-  http://localhost:3000/fertilizer║
-echo  ║  Profitability ROI -  http://localhost:3000/profitability║
-echo  ║  Market Prices     -  http://localhost:3000/market   ║
-echo  ║  Backend API Docs  -  http://localhost:8000/docs     ║
-echo  ╚══════════════════════════════════════════════════════╝
+echo  ╔════════════════════════════════════════════════════════════╗
+echo  ║                      AgriIQ is Live!                       ║
+echo  ╠════════════════════════════════════════════════════════════╣
+echo  ║  Frontend          -  http://localhost:3000                ║
+echo  ║  Fallback Link     -  http://127.0.0.1:3000                ║
+echo  ║  Farm Map Setup    -  http://localhost:3000/fields/new     ║
+echo  ║  NDVI Monitor      -  http://localhost:3000/ndvi           ║
+echo  ║  Crop Intelligence -  http://localhost:3000/crop           ║
+echo  ║  Weather Intel     -  http://localhost:3000/weather-intel  ║
+echo  ║  Fertilizer Advisor-  http://localhost:3000/fertilizer     ║
+echo  ║  Profitability ROI -  http://localhost:3000/profitability  ║
+echo  ║  Market Prices     -  http://localhost:3000/market         ║
+echo  ║  Backend API Docs  -  http://localhost:8000/docs           ║
+echo  ╚════════════════════════════════════════════════════════════╝
 echo.
-echo  Keep the opened Backend and Frontend command windows open
-echo  while using the app.
+echo  *************************************************************
+echo  IMPORTANT: KEEP THE BACKEND AND FRONTEND COMMAND WINDOWS OPEN!
+echo  Do NOT close the black command prompt windows.
+echo  Closing them will stop the servers and cause "Connection Refused".
+echo  *************************************************************
 echo.
 pause

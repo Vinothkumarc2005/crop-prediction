@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { MapPin, Leaf, Save, ChevronRight, Loader2, Navigation } from 'lucide-react'
 import { formatArea, calculatePolygonAreaHectares } from '../utils/geoUtils'
 import { useQuery } from '@tanstack/react-query'
+import { ALL_INDIAN_STATES, INDIA_LOCATIONS } from '../data/indiaLocations'
 
 const CROPS = ['Rice', 'Wheat', 'Maize', 'Soybean', 'Cotton', 'Groundnut', 'Sugarcane', 'Tur (Arhar)', 'Gram', 'None / Fallow']
 
@@ -29,32 +30,32 @@ export default function FieldSetup() {
     prevPrevCrop: '',
   })
 
-  // ── Load states from backend ───────────────────────────────────────────────
-  const { data: states = [] } = useQuery<string[]>({
+  // ── Load states from backend with built-in fallback ────────────────────────
+  const { data: apiStates } = useQuery<string[]>({
     queryKey: ['location-states'],
     queryFn: locationApi.states,
     staleTime: Infinity,
+    retry: 1,
   })
 
-  // ── Load cities for selected state ────────────────────────────────────────
-  const { data: cities = [] } = useQuery<string[]>({
+  const states = apiStates && apiStates.length > 0 ? apiStates : ALL_INDIAN_STATES
+
+  // ── Load cities for selected state with fallback ───────────────────────────
+  const { data: apiCities } = useQuery<string[]>({
     queryKey: ['location-cities', form.state],
     queryFn: () => locationApi.cities(form.state),
     enabled: !!form.state,
     staleTime: Infinity,
+    retry: 1,
   })
+
+  const fallbackCities = form.state && INDIA_LOCATIONS[form.state] ? INDIA_LOCATIONS[form.state] : []
+  const cities = apiCities && apiCities.length > 0 ? apiCities : fallbackCities
 
   // Reset city when state changes
   useEffect(() => {
     setForm(f => ({ ...f, city: '' }))
   }, [form.state])
-
-  // Default first state when states load
-  useEffect(() => {
-    if (states.length > 0 && !form.state) {
-      setForm(f => ({ ...f, state: states[0] }))
-    }
-  }, [states])
 
   // ── Geocode and fly to city ────────────────────────────────────────────────
   const geocodeAndFly = useCallback(async (city: string, state: string) => {
@@ -108,6 +109,8 @@ export default function FieldSetup() {
       let msg = 'Failed to save field'
       if (typeof detail === 'string') msg = detail
       else if (Array.isArray(detail) && detail.length > 0) msg = detail.map((d: any) => d.msg).join(', ')
+      else if (err.code === 'ERR_NETWORK' || !err.response) msg = 'Failed to save field: Backend server is offline or unreachable. Please run start.bat.'
+      else if (err.message) msg = `Failed to save field: ${err.message}`
       toast.error(msg)
     } finally {
       setLoading(false)

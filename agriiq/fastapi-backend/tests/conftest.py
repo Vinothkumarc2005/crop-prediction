@@ -49,7 +49,6 @@ def client(mock_db_conn):
     app.state.model = mock_model
 
     with patch("app.db.connection._pool", mock_pool), \
-         patch("app.api.routes.health._pool", mock_pool), \
          patch.object(app.router, "lifespan_context") as mock_lifespan:
         
         @asynccontextmanager

@@ -114,11 +114,16 @@ def create_field(
     Java approximation (areaSqDegrees × 1239100).
     """
     # Build WKT polygon from coordinate list
-    # Ensure ring is closed (first == last)
-    coords = list(coordinates)
-    if coords[0] != coords[-1]:
-        coords.append(coords[0])
-    coord_str = ", ".join(f"{lng} {lat}" for lng, lat in coords)
+    # Remove consecutive identical points and ensure ring is closed (first == last)
+    clean_coords: list[list[float]] = []
+    for pt in coordinates:
+        if not clean_coords or (clean_coords[-1][0] != pt[0] or clean_coords[-1][1] != pt[1]):
+            clean_coords.append(pt)
+    if len(clean_coords) < 3:
+        raise ValueError("Polygon must have at least 3 distinct vertices")
+    if clean_coords[0] != clean_coords[-1]:
+        clean_coords.append(clean_coords[0])
+    coord_str = ", ".join(f"{lng} {lat}" for lng, lat in clean_coords)
     wkt = f"POLYGON(({coord_str}))"
 
     with conn.cursor() as cur:
@@ -130,9 +135,18 @@ def create_field(
             )
             VALUES (
                 %s, %s,
-                ST_SetSRID(ST_GeomFromText(%s), 4326),
+                COALESCE(
+                    ST_GeometryN(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(ST_GeomFromText(%s), 4326)), 3), 1),
+                    ST_SetSRID(ST_GeomFromText(%s), 4326)
+                ),
                 ROUND(
-                    (ST_Area(ST_Transform(ST_SetSRID(ST_GeomFromText(%s), 4326), 3857)) / 10000.0)::NUMERIC,
+                    (ST_Area(ST_Transform(
+                        COALESCE(
+                            ST_GeometryN(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(ST_GeomFromText(%s), 4326)), 3), 1),
+                            ST_SetSRID(ST_GeomFromText(%s), 4326)
+                        ),
+                        3857
+                    )) / 10000.0)::NUMERIC,
                     4
                 ),
                 %s, %s, %s, %s
@@ -149,7 +163,7 @@ def create_field(
                 created_at,
                 ST_AsGeoJSON(boundary)::jsonb AS boundary_geojson
             """,
-            (str(user_id), name, wkt, wkt, district, state, previous_crop, prev_prev_crop),
+            (str(user_id), name, wkt, wkt, wkt, wkt, district, state, previous_crop, prev_prev_crop),
         )
         row = cur.fetchone()
         if row is None:
