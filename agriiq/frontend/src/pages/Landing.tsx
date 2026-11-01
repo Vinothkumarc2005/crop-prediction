@@ -104,7 +104,7 @@ export default function Landing() {
             </div>
 
             {/* Confidence preview */}
-            <div className="card-glass" style={{ marginTop: '2.5rem', maxWidth: '480px' }}>
+            <div className="preview-card" style={{ marginTop: '2.5rem', maxWidth: '480px' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
                 Sample recommendation preview
               </div>
@@ -117,7 +117,7 @@ export default function Landing() {
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.375rem' }}>Profit range / hectare</div>
               {/* Mini range bar */}
-              <div style={{ height: '8px', background: 'rgba(255,255,255,0.07)', borderRadius: '999px', position: 'relative', marginBottom: '0.5rem' }}>
+              <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '999px', position: 'relative', marginBottom: '0.5rem' }}>
                 <div style={{ position: 'absolute', left: 0, right: 0, height: '100%', background: 'linear-gradient(90deg, var(--color-accent), var(--color-primary))', borderRadius: '999px' }} />
                 <div style={{ position: 'absolute', left: '58%', top: '-3px', width: '14px', height: '14px', borderRadius: '50%', background: 'white', border: '2px solid var(--color-primary)', transform: 'translateX(-50%)' }} />
               </div>
